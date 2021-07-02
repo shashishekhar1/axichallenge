@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	
+	<sub-flow name="get-db-session-id-subFlow" doc:id="77aeaaac-2571-4207-8584-2aa0fce6ae8b" >
+		<logger level="INFO" doc:name="Logger" doc:id="81ead2f4-64a2-4f65-b54b-510d3f3842cf" message="Get Session Id Request" />
+		<ee:transform doc:name="Transform Message" doc:id="b3b0ddbb-d4b0-4468-bd5e-ad81264c35f1">
+			<ee:message>
+				<ee:set-payload resource="dw/db-session-token-request.dwl"></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="accessId"><![CDATA[%dw 2.0
+output application/java
+---
+p('db.appId')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="POST" doc:name="Session Id Request" doc:id="fcf01905-db9e-44a5-aaec-59038e7955d4" config-ref="HTTP_DB_Request_configuration" path="${db.login}">
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"X-Parse-Application-Id" : vars.accessId
+}]]]></http:headers>
+			<http:response-validator >
+				<http:success-status-code-validator values="200" />
+			</http:response-validator>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="4a689c69-9714-483a-afe2-c232df23cb5b">
+			<ee:variables>
+				<ee:set-variable variableName="sessionId"><![CDATA[%dw 2.0
+output application/java
+---
+payload.sessionToken]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		
+		
+	</sub-flow>
+	
+	
+	
+</mule>

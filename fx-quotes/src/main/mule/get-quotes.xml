@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	
+	<sub-flow name="get-fx-quote-subFlow" doc:id="77aeaaac-2571-4207-8584-2aa0fce6ae8b" >
+		<logger level="INFO" doc:name="Logger" doc:id="81ead2f4-64a2-4f65-b54b-510d3f3842cf" message="Get Fx Quote Request" />
+		<ee:transform doc:name="Get Quote Id">
+            <ee:variables>
+                <ee:set-variable variableName="quoteId"><![CDATA[attributes.uriParams.'quoteId']]></ee:set-variable>
+				
+            </ee:variables>
+        </ee:transform>
+		<ee:transform doc:name="Get Quote Query" doc:id="6b4e477e-ccca-45e2-a0ee-430225b34ea6" >
+			<ee:variables >
+				<ee:set-variable variableName="getQuoteQuery" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"quoteid": vars.quoteId
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="3ac1c747-31cf-4f22-9662-f6e81ce0a7ad" name="get-db-session-id-subFlow"/>
+		<set-payload value="#[null]" doc:name="Set Payload"/>
+		<http:request method="GET" doc:name="Get Quote Request" doc:id="54067404-3c44-41f7-91d5-05200d1bef55" config-ref="HTTP_DB_Request_configuration" path="${db.quote.create}/{quoteId}">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-Parse-Application-Id" : vars.accessId,
+	"X-Parse-Session-Token"  : vars.sessionId,
+	"Content-Type"           : "application/json"
+}]]]></http:headers>
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"quoteId" : vars.quoteId
+}]]]></http:uri-params>
+			<http:response-validator >
+				<http:success-status-code-validator values="200" />
+			</http:response-validator>
+		</http:request>
+		<ee:transform doc:name="Get quote id response" doc:id="08b9abd9-ca6b-48f0-93d8-a4ff96cbcde9" >
+			<ee:message >
+				<ee:set-payload resource="dw/get-quotes-response.dwl"></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+        
+	</sub-flow>
+	
+	
+</mule>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=" http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    
+    <configuration-properties doc:name="Configuration properties" doc:id="89ccbf79-4a58-4866-adab-bfad1aa38f31" file="properties-local.yaml" />
+    <configuration doc:name="Configuration" doc:id="4660cf32-fd67-40f7-b78b-0c7ace99ac07" defaultErrorHandler-ref="global-error-handler" />
+    
+    <http:listener-config name="fx-quotes-httpListenerConfig">
+        <http:listener-connection host="${https.private.host}" port="${https.private.port}" />
+    </http:listener-config>
+    <apikit:config name="fx-quotes-config" api="fx-quotes.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    
+    <http:request-config name="HTTP_DB_Request_configuration" doc:name="HTTP Request configuration" doc:id="be8eda05-9271-4086-af01-8e71a6bc6ff7" basePath="${db.baseUrl}" >
+		<http:request-connection protocol="HTTPS" host="${db.host}" port="${db.port}" />
+	</http:request-config>
+    
+    <global-property doc:name="Global Property" doc:id="57c4bb21-ca1c-4447-95b9-c6d8797967cd" name="mule.env" value="local" />
+
+	<http:request-config name="Fixer_Request_configuration" doc:name="HTTP Request configuration" doc:id="a6b3cd04-57f0-46bd-a49f-73ea792a8e30" basePath="${fixer.baseUrl}" >
+		<http:request-connection host="${fixer.host}" port="${fixer.port}" />
+	</http:request-config>
+
+    <error-handler name="global-error-handler" doc:id="b0e74db7-aabf-4ff1-a967-20a245810e62">
+        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0f7a5334-eb63-4b90-8ec4-1a5b2b884b7d" type="HTTP:CONNECTIVITY">
+            <ee:transform doc:name="Transform Message" doc:id="804cf03c-ac1d-41c8-9f80-d96ce7aa065b">
+                <ee:message>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "error": {
+    "code": 500,
+    "type": "Unexpected Server Error",
+    "detail": "Backend Connectivity Failed - Please try again or contact support"
+  },
+  status: "NOK"
+}]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+            <logger level="ERROR" doc:name="Logger" doc:id="c978014c-f39e-4306-813a-6105d5616b93" message="#[payload]" />
+        </on-error-propagate>
+        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4caa2dd1-2cf2-471b-9cde-91c46481831a" type="ANY">
+            <ee:transform doc:name="Transform Message" doc:id="b26b5fa3-81e8-42a7-82ca-546355576c22">
+                <ee:message>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "error": {
+    "code": 500,
+    "type": "Unexpected Server Error",
+    "detail": "Please try again and if error persists, contact support"
+  },
+  status: "NOK"
+}]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+            <logger level="ERROR" doc:name="Logger" doc:id="3153e6d6-1eff-4946-bf9e-6dbeeb685443" message="#[payload]" />
+        </on-error-propagate>
+    </error-handler>
+</mule>

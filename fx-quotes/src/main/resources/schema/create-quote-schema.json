@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "buyCurrency": {
+      "type": "string",
+      "enum": ["EUR"]
+    },
+    "sellCurrency": {
+      "type": "string"
+    },
+    "buyAmount": {
+      "type": "string"
+    },
+    "sellAmount": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "buyCurrency",
+    "sellCurrency"
+  ]
+}

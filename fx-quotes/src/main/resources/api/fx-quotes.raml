@@ -1,0 +1,76 @@
+#%RAML 1.0
+title: FX Quotes API
+baseUri: https://{hostname}/{env}/api
+description: |
+  This API will be used for creating/ fetching and updating fx quotes.
+
+baseUriParameters:
+  hostname:
+    description: Hostname for APIs
+    enum:
+      - api-fx.com.au
+      - api-fx-test.com.au
+    required: true
+  env:
+    description: Specific test environment (blank for production environment)
+    enum:
+      - dev
+      - sit
+      - uat
+    required: false
+
+mediaType:
+  - application/json
+version: 1.0.0
+
+protocols:
+  - HTTPS
+  - HTTP
+
+securitySchemes:
+  SecurityScheme:
+    type: Basic Authentication
+    description: Basic Authentication will be used for accessing this API
+
+traits:
+  required-auth-header:
+    headers:
+      Authorization: string # Valid access token value
+
+# Endpoints
+/v1:
+  /fx:
+    /quotes:
+      post:
+        description: This API will be used to create a fx quote.
+        is: required-auth-header
+        body:
+          application/json:
+            example: !include examples/post-fx-quote-request.json
+        responses:
+          201:
+            body:
+              application/json:
+                example: !include examples/post-fx-quote-response.json
+      /{quoteId}:
+        get:
+          description: Read fx quote details using quote id.
+          is: required-auth-header
+          responses:
+            200:
+              body:
+                application/json:
+                  example: !include examples/get-fx-quote-response.json
+        patch:
+          description: Update fx quote using quote id.
+          is: required-auth-header
+          body:
+            application/json:
+              example: !include examples/patch-fx-quote-request.json
+          responses:
+            200:
+              body:
+                application/json:
+       
+              
+        

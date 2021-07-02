@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:json="http://www.mulesoft.org/schema/mule/json"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	
+	
+	<sub-flow name="post-fx-rates-subFlow" doc:id="77aeaaac-2571-4207-8584-2aa0fce6ae8b" >
+		
+		<ee:transform doc:name="Fx Rates Request" doc:id="b31afb2f-5c3b-4cdb-b4a6-63e1447c9974">
+			<ee:message>
+				<ee:set-payload resource="dw/post-quote-request.dwl" />
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable resource="dw/save-request-payload.dwl" variableName="requestPayload" ></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Get conversion rate" doc:id="0c4fea62-cc53-4442-a9af-fc0c564d76b1" name="get-fx-rates-subFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="e7af044b-d64f-4d5a-99ac-7871e44cfab5" >
+			
+			<ee:variables >
+				<ee:set-variable resource="dw/create-fx-quote.dwl" variableName="createQuotePayload" ></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Request Payload" doc:id="ad9e0cf8-2471-4ca3-8fa4-189d55bdd37a" message="Fx Request #[payload]"/>
+		
+		<flow-ref doc:name="Save Quote" doc:id="2287705d-7c39-46e1-bd0f-823c4eb766ee" name="save-fx-quote-db-subFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="716f4641-6bba-4aec-8113-9d1c2d8494ac" >
+			<ee:message >
+				<ee:set-payload resource="dw/quote-response.dwl"></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Response Payload" doc:id="d64474dd-5485-4b31-ac96-1e157ef77db3" message="ETQ Response #[payload]"/>
+		
+	</sub-flow>
+	
+	<sub-flow name="validation-subFlow" doc:id="21e090a1-cf7b-4bf9-a54c-5d97c7376216" >
+		
+		<!-- json:validate-schema doc:name="Validate schema" doc:id="f94dcf9a-bf44-4ead-be97-e0b226c52688" schema="schema\create-quote-schema.json" dereferencing="INLINE"/-->
+		
+		<choice doc:name="Choice" doc:id="51504bf8-ae29-4aa5-8290-76bf61394f4d" >
+			<when expression='payload.buyAmount =="" and payload.sellAmount == ""'>
+				<set-variable value="400" doc:name="Set Variable" doc:id="a31c5bc6-3ea0-46f7-8786-ae4e71c7042d" variableName="httpStatus"/>
+				<ee:transform doc:name="Transform Message" doc:id="bf904650-6f68-4ec1-851b-1818dfdf98cf" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error : "Invalid request",
+	description : "Buy amount or Sell amount should be part of the request."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			
+			<when expression='payload.buyAmount !="" and payload.sellAmount != ""'>
+				<set-variable value="400" doc:name="Set Variable" doc:id="91ed4000-bdf7-4be9-96f3-97ed0c88569e" variableName="httpStatus"/>
+				<ee:transform doc:name="Transform Message" doc:id="2aa1e37e-1711-43fd-8b32-ad21c1cae7b8" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error : "Invalid request",
+	description : "Only field in Buy or Sell amount is required."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="Create quote subFlow" doc:id="bf85d924-13cf-4c0e-8626-c5bbfe57b0c7" name="post-fx-rates-subFlow"/>
+			</otherwise>
+		</choice>
+		
+	</sub-flow>
+
+	<sub-flow name="save-fx-quote-db-subFlow" doc:id="7a7118b3-2334-47a4-ada9-e9bad7bce2b0" >
+		<flow-ref doc:name="Get Session Id" doc:id="c7bddcdd-4e07-4c66-a1e1-afeb77780036" name="get-db-session-id-subFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="d4c94c44-8034-44e2-a4d1-a133e3c9e484">
+			<ee:message>
+				<ee:set-payload resource="dw/save-quote-to-db-request.dwl"></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="POST" doc:name="Save Quote Request" doc:id="69d7391c-f1d8-4db8-9c71-8a92b3d36728" config-ref="HTTP_DB_Request_configuration" path="${db.quote.create}">
+			
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	"X-Parse-Application-Id" : vars.accessId,
+	"X-Parse-Session-Token"  : vars.sessionId,
+	"Content-Type"           : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+			<http:response-validator >
+				<http:success-status-code-validator values="201" />
+			</http:response-validator>
+		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="a31f7ea5-a3ac-4a8d-8d6c-1fb76646f028" message="Save DB object Response #[payload]"/>
+	</sub-flow>
+	
+</mule>

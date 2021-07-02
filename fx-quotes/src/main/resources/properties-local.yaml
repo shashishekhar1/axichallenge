@@ -1,0 +1,32 @@
+https:
+  private:
+    host: "0.0.0.0"
+    port: "8091"
+  connection:
+    timeout: "30000"
+  response:
+    timeout: "30000"
+  ssl:
+    truststore: "keystore.jks"
+    password: "Password1"
+    alias: "mule"
+  
+fixer:
+  host: "data.fixer.io"
+  port: "80"
+  baseUrl: "/api"
+  accessKey: "95260a6bc4843f907ac2382ded1350ff"
+   
+db:
+  host: "apps.simbla.com"
+  port: "443"
+  baseUrl: "/parse"
+  appId: "aaaaaaab878c0c4b78493d7b54280ede9219e6c1"
+  user: "sprashar@pepper.com.au"
+  pass: "America50@"
+  login: "/login"
+  quote:
+    create: "/classes/fxQuotes"
+    
+calclation:
+  markup: "5"

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	
+	
+	
+	<sub-flow name="get-fx-rates-subFlow" doc:id="77aeaaac-2571-4207-8584-2aa0fce6ae8b" >
+		<logger level="INFO" doc:name="Log Request Payload" doc:id="ad9e0cf8-2471-4ca3-8fa4-189d55bdd37a" message="Fx Request #[payload]"/>
+		<http:request method="GET" doc:name="Http Fx request" doc:id="537cbfd9-af4d-4fbd-a335-2f361ccf5e78" config-ref="Fixer_Request_configuration" path="/latest">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	access_key : payload.key,
+	symbols : payload.symbol,
+	base : payload.base
+}]]]></http:query-params>
+			<http:response-validator >
+				<http:success-status-code-validator values="200" />
+			</http:response-validator>
+		</http:request>
+		<ee:transform doc:name="Rates Response" doc:id="a8ab1410-facb-4a82-abee-72f372b13a7c" >
+			<ee:variables >
+				<ee:set-variable variableName="ratesResponse" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.rates]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log Response Payload" doc:id="d64474dd-5485-4b31-ac96-1e157ef77db3" message="ETQ Response #[payload]"/>
+		
+	</sub-flow>
+
+	
+</mule>
