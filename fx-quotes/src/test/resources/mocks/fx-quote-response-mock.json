@@ -1,0 +1,9 @@
+{
+	"success"  : "true",
+	"timestamp": "1625236743",
+	"base"     : "EUR",
+	"date"     : "2021-07-03",
+	"rates" :{
+		"JPY"  : 131.764773
+	}
+}

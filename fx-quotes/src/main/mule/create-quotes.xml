@@ -43,7 +43,6 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 	<sub-flow name="validation-subFlow" doc:id="21e090a1-cf7b-4bf9-a54c-5d97c7376216" >
 		
 		<!-- json:validate-schema doc:name="Validate schema" doc:id="f94dcf9a-bf44-4ead-be97-e0b226c52688" schema="schema\create-quote-schema.json" dereferencing="INLINE"/-->
-		
 		<choice doc:name="Choice" doc:id="51504bf8-ae29-4aa5-8290-76bf61394f4d" >
 			<when expression='payload.buyAmount =="" and payload.sellAmount == ""'>
 				<set-variable value="400" doc:name="Set Variable" doc:id="a31c5bc6-3ea0-46f7-8786-ae4e71c7042d" variableName="httpStatus"/>
@@ -60,7 +59,7 @@ output application/json
 				</ee:transform>
 			</when>
 			
-			<when expression='payload.buyAmount !="" and payload.sellAmount != ""'>
+			<when expression='payload.buyCurrency =="" or payload.sellCurrency == ""'>
 				<set-variable value="400" doc:name="Set Variable" doc:id="91ed4000-bdf7-4be9-96f3-97ed0c88569e" variableName="httpStatus"/>
 				<ee:transform doc:name="Transform Message" doc:id="2aa1e37e-1711-43fd-8b32-ad21c1cae7b8" >
 					<ee:message >
@@ -69,7 +68,21 @@ output application/json
 ---
 {
 	error : "Invalid request",
-	description : "Only field in Buy or Sell amount is required."
+	description : "Buy or Sell currency is required to create a quote."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<when expression='payload.buyCurrency !="EUR" '>
+				<set-variable value="400" doc:name="Set Variable" doc:id="5c64b107-7b95-4e2d-be3f-69d2559b32c9" variableName="httpStatus"/>
+				<ee:transform doc:name="Transform Message" doc:id="2c1236c4-dc1e-4289-ba9f-c21abb2fabfb" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	error : "Invalid request",
+	description : "Only EUR as base currency is supported at this moment."
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>

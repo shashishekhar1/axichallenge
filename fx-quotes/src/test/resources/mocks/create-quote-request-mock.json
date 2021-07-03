@@ -1,0 +1,6 @@
+{
+	"buyCurrency" : "EUR",
+	"sellCurrency": "JPY",
+	"buyAmount"   : "10",
+	"sellAmount"  : ""
+}
